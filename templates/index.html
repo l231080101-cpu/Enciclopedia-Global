@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CountryPedia | Global Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        .bg-animated {
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a, #000000);
+            background-attachment: fixed;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(139, 92, 246, 0.5); 
+            transform: translateY(-10px) scale(1.02);
+        }
+
+        .btn-neon {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .comparison-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(217, 70, 239, 0.1) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-animated min-h-screen text-slate-100">
+
+    <nav class="sticky top-0 z-50 px-6 py-4 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2 group cursor-pointer" onclick="irAExplorar()">
+                <div class="p-2 bg-violet-600 rounded-lg group-hover:rotate-12 transition-transform">
+                    <i class="fas fa-globe text-white text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-white uppercase italic">Country<span class="text-violet-500">Pedia</span></h1>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8 text-sm font-semibold uppercase tracking-widest">
+                <button onclick="irAExplorar()" class="hover:text-violet-400 transition-colors">Explorar</button>
+                <button onclick="verFavoritos()" class="hover:text-violet-400 transition-colors">Favoritos</button>
+                <button onclick="mostrarTipoCambio()" class="glass-card px-4 py-2 rounded-full text-xs transition-all hover:border-violet-500">
+                    <i class="fas fa-dollar-sign mr-1"></i> USD Hoy
+                </button>
+                <button onclick="manejarSesion()" class="btn-neon px-6 py-2 rounded-full text-xs transition-all hover:scale-105 active:scale-95 text-white">
+                    <span id="authButtonText">Sesión</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="relative pt-20 pb-12 px-6 overflow-hidden">
+        <div class="max-w-5xl mx-auto text-center relative z-10">
+            <span class="inline-block px-4 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold mb-6 tracking-widest uppercase">
+                v2.0 Enciclopedia Global
+            </span>
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-500 leading-tight">
+                El mundo entero, <br> en alta resolución.
+            </h2>
+            
+            <div class="max-w-2xl mx-auto mt-12 relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-2xl blur opacity-25 group-focus-within:opacity-75 transition duration-1000"></div>
+                <div class="relative flex items-center bg-slate-900 rounded-2xl overflow-hidden border border-white/10">
+                    <i class="fas fa-search ml-6 text-slate-500"></i>
+                    <input type="text" id="search" list="country-list" placeholder="Escribe el nombre de un país (ej: mexico)..." 
+                    class="w-full bg-transparent px-6 py-5 outline-none text-white placeholder:text-slate-600 font-medium">
+                    <datalist id="country-list"></datalist>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="max-w-7xl mx-auto px-6 mb-12">
+        <div class="flex flex-wrap justify-center gap-3">
+            <button onclick="filtrarRegion('Americas')" class="glass-card px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-violet-500 transition-all flex items-center gap-2">
+                <i class="fas fa-map-marked-alt text-violet-400"></i> América
+            </button>
+            <button onclick="filtrarRegion('Europe')" class="glass-card px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-blue-500 transition-all flex items-center gap-2">
+                <i class="fas fa-landmark text-blue-400"></i> Europa
+            </button>
+            <button onclick="filtrarRegion('Africa')" class="glass-card px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-orange-500 transition-all flex items-center gap-2">
+                <i class="fas fa-hippo text-orange-400"></i> África
+            </button>
+            <button onclick="filtrarRegion('Asia')" class="glass-card px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-red-500 transition-all flex items-center gap-2">
+                <i class="fas fa-torii-gate text-red-400"></i> Asia
+            </button>
+            <button onclick="filtrarRegion('Oceania')" class="glass-card px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:border-teal-500 transition-all flex items-center gap-2">
+                <i class="fas fa-fish text-teal-400"></i> Oceanía
+            </button>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto p-6">
+        <div class="mb-10 border-b border-white/5 pb-4">
+            <h3 id="section-title" class="text-xl font-bold text-white">Explorar Países</h3>
+            <p id="section-desc" class="text-slate-500 text-sm">Resultados globales en tiempo real</p>
+        </div>
+
+        <div id="loading" class="hidden text-center py-10">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-violet-500"></i>
+        </div>
+
+        <div id="grid-paises" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div class="text-slate-500 col-span-full text-center py-10 italic">Comienza a escribir en el buscador para explorar...</div>
+        </div>
+    </main>
+
+    <!-- Modal de Detalles -->
+    <div id="modal-detalles" class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4 bg-slate-950/90 backdrop-blur-md">
+        <div class="glass-card max-w-lg w-full rounded-3xl p-8 relative fade-in border-violet-500/30">
+            <button onclick="cerrarModal()" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div id="modal-content" class="space-y-6"></div>
+            <button onclick="cerrarModal()" class="w-full mt-8 py-4 rounded-2xl btn-neon font-bold text-xs uppercase tracking-widest text-white">
+                Cerrar Ventana
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Comparación de Gastos -->
+    <div id="modal-comparacion" class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4 bg-slate-950/95 backdrop-blur-md overflow-y-auto py-8">
+        <div class="glass-card max-w-4xl w-full rounded-3xl p-8 relative fade-in border-violet-500/30">
+            <button onclick="cerrarComparacion()" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors z-10">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h2 class="text-3xl font-extrabold text-white mb-2 text-center">Comparación de Gastos</h2>
+            <p class="text-center text-slate-400 mb-8 text-sm">Comparativa de costo de vida y gastos diarios</p>
+            
+            <!-- Selector de país base -->
+            <div class="mb-6">
+                <label class="block text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-2 ml-1">País de origen (base)</label>
+                <select id="baseCountrySelect" class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-violet-500 outline-none transition-all">
+                    <option value="">Cargando países...</option>
+                </select>
+            </div>
+            
+            <div id="comparacion-content" class="space-y-6">
+                <!-- Contenido dinámico de comparación -->
+                <div class="text-center text-slate-400">Selecciona un país base para ver la comparación</div>
+            </div>
+            
+            <button onclick="cerrarComparacion()" class="w-full mt-8 py-4 rounded-2xl btn-neon font-bold text-xs uppercase tracking-widest text-white">
+                Cerrar Comparación
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Tipo de Cambio -->
+    <div id="modal-tipo-cambio" class="hidden fixed inset-0 z-[120] flex items-center justify-center px-4 bg-slate-950/95 backdrop-blur-xl">
+        <div class="glass-card max-w-md w-full rounded-3xl p-8 relative fade-in border-violet-500/30">
+            <button onclick="cerrarTipoCambio()" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h2 class="text-2xl font-extrabold text-white mb-4">💰 Tipo de Cambio USD</h2>
+            <p class="text-slate-400 text-sm mb-6">Cotización del dólar frente a otras monedas</p>
+            <div id="exchange-rates-content" class="space-y-3">
+                <div class="text-center text-slate-400">Cargando...</div>
+            </div>
+            <button onclick="cerrarTipoCambio()" class="w-full mt-6 py-3 rounded-2xl btn-neon font-bold text-xs uppercase tracking-widest text-white">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Sesión -->
+    <div id="modal-sesion" class="hidden fixed inset-0 z-[110] flex items-center justify-center px-4 bg-slate-950/95 backdrop-blur-xl">
+        <div class="glass-card max-w-md w-full rounded-3xl p-10 relative fade-in border-violet-500/30">
+            <button onclick="cerrarSesion()" class="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <div id="view-login" class="fade-in">
+                <div class="text-center mb-8">
+                    <div class="inline-flex p-3 bg-violet-600 rounded-xl mb-4 shadow-lg shadow-violet-500/20">
+                        <i class="fas fa-user-circle text-white text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-white">Acceso Explorer</h2>
+                    <p class="text-slate-400 text-sm mt-2">Gestiona tus descubrimientos globales</p>
+                </div>
+
+                <form id="loginForm" class="space-y-5">
+                    <div>
+                        <label class="block text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-2 ml-1">Usuario o Email</label>
+                        <div class="relative group">
+                            <i class="fas fa-user absolute left-4 top-4 text-slate-600 group-focus-within:text-violet-400 transition-colors"></i>
+                            <input type="text" id="loginIdentifier" placeholder="Nombre de usuario o email" required
+                            class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-violet-500 outline-none transition-all placeholder:text-slate-600">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-violet-400 uppercase tracking-widest mb-2 ml-1">Contraseña</label>
+                        <div class="relative group">
+                            <i class="fas fa-lock absolute left-4 top-4 text-slate-600 group-focus-within:text-violet-400 transition-colors"></i>
+                            <input type="password" id="loginPassword" placeholder="••••••••" required
+                            class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:border-violet-500 outline-none transition-all placeholder:text-slate-600">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-4 rounded-2xl btn-neon font-bold text-xs uppercase tracking-widest text-white hover:scale-[1.02] active:scale-95 transition-all mt-4">
+                        Entrar al Sistema
+                    </button>
+                    <p class="text-center text-[10px] text-slate-500 uppercase tracking-tighter mt-4">
+                        ¿No tienes cuenta? <button type="button" onclick="cambiarVista('registro')" class="text-violet-400 hover:underline">Regístrate aquí</button>
+                    </p>
+                </form>
+            </div>
+
+            <div id="view-registro" class="hidden fade-in">
+                <div class="text-center mb-8">
+                    <div class="inline-flex p-3 bg-fuchsia-600 rounded-xl mb-4 shadow-lg shadow-fuchsia-500/20">
+                        <i class="fas fa-user-plus text-white text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-white">Crear Cuenta</h2>
+                    <p class="text-slate-400 text-sm mt-2">Únete a la red de exploradores</p>
+                </div>
+
+                <form id="registerForm" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mb-2 ml-1">Email</label>
+                        <input type="email" id="registerEmail" placeholder="explorador@mundo.com" required
+                        class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-fuchsia-500 outline-none transition-all placeholder:text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mb-2 ml-1">Usuario</label>
+                        <input type="text" id="registerUsername" placeholder="Tu username" required
+                        class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-fuchsia-500 outline-none transition-all placeholder:text-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest mb-2 ml-1">Contraseña</label>
+                        <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required
+                        class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-fuchsia-500 outline-none transition-all placeholder:text-slate-600">
+                    </div>
+                    <button type="submit" class="w-full py-4 rounded-2xl bg-gradient-to-r from-fuchsia-600 to-violet-600 font-bold text-xs uppercase tracking-widest text-white hover:scale-[1.02] active:scale-95 transition-all mt-4 shadow-lg shadow-fuchsia-500/20">
+                        Registrarme
+                    </button>
+                    <p class="text-center text-[10px] text-slate-500 uppercase tracking-tighter mt-4">
+                        ¿Ya tienes cuenta? <button type="button" onclick="cambiarVista('login')" class="text-fuchsia-400 hover:underline">Inicia sesión</button>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:5000";
+        const searchInput = document.getElementById('search');
+        const grid = document.getElementById('grid-paises');
+        const loading = document.getElementById('loading');
+        
+        let comparacionChart = null;
+        let currentTargetCountry = null;
+        let allCountriesList = [];
+        
+        // Variables de autenticación
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+        // Función para realizar peticiones con token automático
+        async function authFetch(url, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            const response = await fetch(url, { ...options, headers });
+            if (response.status === 401) {
+                logout();
+                alert('Sesión expirada. Por favor inicia sesión nuevamente.');
+            }
+            return response;
+        }
+
+        // Login
+        async function login(identifier, password) {
+            try {
+                const res = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    document.getElementById('authButtonText').innerText = currentUser.username;
+                    cerrarSesion();
+                    alert(`Bienvenido ${currentUser.username}!`);
+                    return true;
+                } else {
+                    alert(data.error || 'Error en inicio de sesión');
+                    return false;
+                }
+            } catch (err) {
+                alert('Error de conexión');
+                return false;
+            }
+        }
+
+        // Registro
+        async function register(email, username, password) {
+            try {
+                const res = await fetch(`${API_BASE}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    authToken = data.token;
+                    currentUser = data.user;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    document.getElementById('authButtonText').innerText = currentUser.username;
+                    cerrarSesion();
+                    alert(`Registro exitoso. Bienvenido ${currentUser.username}!`);
+                    return true;
+                } else {
+                    alert(data.error || 'Error en registro');
+                    return false;
+                }
+            } catch (err) {
+                alert('Error de conexión');
+                return false;
+            }
+        }
+
+        // Cerrar sesión
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            document.getElementById('authButtonText').innerText = 'Sesión';
+            alert('Has cerrado sesión');
+        }
+
+        // Manejar botón de sesión
+        function manejarSesion() {
+            if (authToken) {
+                if (confirm('¿Cerrar sesión?')) {
+                    logout();
+                }
+            } else {
+                cambiarVista('login');
+                document.getElementById('modal-sesion').classList.remove('hidden');
+            }
+        }
+
+        // Función auxiliar para favoritos con autenticación
+        async function toggleFavorite(country) {
+            if (!authToken) {
+                alert('Debes iniciar sesión para guardar favoritos');
+                manejarSesion();
+                return;
+            }
+            try {
+                const res = await authFetch(`${API_BASE}/api/favoritos`, {
+                    method: 'POST',
+                    body: JSON.stringify(country)
+                });
+                if (res.ok) {
+                    alert(`⭐ ${country.name.common} guardado en favoritos.`);
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Error al guardar');
+                }
+            } catch (err) {
+                alert("Error al guardar.");
+            }
+        }
+
+        async function verFavoritos() {
+            if (!authToken) {
+                alert('Debes iniciar sesión para ver tus favoritos');
+                manejarSesion();
+                return;
+            }
+            grid.innerHTML = '';
+            loading.classList.remove('hidden');
+            document.getElementById('section-title').innerText = "Tus Favoritos";
+            document.getElementById('section-desc').innerText = "Países guardados";
+            try {
+                const res = await authFetch(`${API_BASE}/api/favoritos`);
+                const favs = await res.json();
+                loading.classList.add('hidden');
+                if (favs.length === 0) {
+                    grid.innerHTML = '<p class="col-span-full text-center py-10 text-slate-500">No tienes favoritos guardados aún.</p>';
+                } else {
+                    grid.innerHTML = favs.map(c => createCountryCard(c)).join('');
+                }
+            } catch (err) { 
+                loading.classList.add('hidden');
+                alert("Error al conectar con la base de datos.");
+            }
+        }
+
+        // Función auxiliar para obtener la hora local a partir de una zona horaria
+        function getLocalTimeFromTimezone(timezoneStr) {
+            try {
+                // Si es un nombre IANA (ej. "Atlantic/Stanley"), usar Intl.DateTimeFormat
+                if (!timezoneStr.includes('UTC') && !timezoneStr.includes('GMT')) {
+                    const now = new Date();
+                    const options = { timeZone: timezoneStr, hour: '2-digit', minute: '2-digit' };
+                    return new Intl.DateTimeFormat('es-ES', options).format(now);
+                }
+                // Si es formato UTC±HH:MM
+                const match = timezoneStr.match(/UTC([+-]\d{1,2})(?::(\d{2}))?/);
+                if (match) {
+                    let horas = parseInt(match[1], 10);
+                    let minutos = match[2] ? parseInt(match[2], 10) : 0;
+                    let offset = horas * 3600 + minutos * 60;
+                    const ahora = new Date();
+                    const utc = ahora.getTime() + (ahora.getTimezoneOffset() * 60000);
+                    const horaLocal = new Date(utc + (offset * 1000));
+                    return horaLocal.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                }
+                return "No disponible";
+            } catch (e) {
+                console.warn("Error parsing timezone:", timezoneStr, e);
+                return "No disponible";
+            }
+        }
+
+        // Versión mejorada de verDetalles usando la API pública directamente
+        async function verDetalles(name) {
+            const modal = document.getElementById('modal-detalles');
+            const content = document.getElementById('modal-content');
+            
+            try {
+                // Usar la API pública directamente para obtener datos frescos y completos
+                const url = `https://restcountries.com/v3.1/name/${encodeURIComponent(name)}?fields=name,flags,currencies,capital,region,subregion,population,timezones`;
+                const resPais = await fetch(url);
+                if (!resPais.ok) throw new Error(`HTTP ${resPais.status}`);
+                const dataPais = await resPais.json();
+                
+                if (!Array.isArray(dataPais) || dataPais.length === 0) {
+                    throw new Error('No se encontraron datos para este país');
+                }
+                const country = dataPais[0];
+
+                // Campos opcionales con valores por defecto
+                const flagUrl = country.flags?.svg || country.flags?.png || '';
+                const currencyKey = country.currencies ? Object.keys(country.currencies)[0] : null;
+                const currencyName = currencyKey ? country.currencies[currencyKey].name : 'N/A';
+                
+                let infoCambio = "No disponible";
+                if (currencyKey) {
+                    try {
+                        const resCambio = await fetch(`${API_BASE}/api/cambio/${currencyKey}`);
+                        const dataCambio = await resCambio.json();
+                        if (dataCambio.tasa && dataCambio.tasa !== "N/A") {
+                            infoCambio = `1 USD = ${dataCambio.tasa.toFixed(2)} ${currencyKey}`;
+                        }
+                    } catch (e) { console.warn("Error obteniendo cambio:", e); }
+                }
+
+                // Obtener zona horaria y hora local
+                let horaFormateada = "No disponible";
+                let tzDisplay = "No disponible";
+                if (country.timezones && country.timezones.length > 0) {
+                    tzDisplay = country.timezones[0];
+                    horaFormateada = getLocalTimeFromTimezone(tzDisplay);
+                }
+
+                content.innerHTML = `
+                    <div class="flex items-center gap-5 mb-8">
+                        <img src="${flagUrl}" class="w-24 h-14 object-cover rounded-xl shadow-2xl border border-white/20" alt="Bandera de ${country.name.common}">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-white tracking-tight">${country.name.common}</h2>
+                            <span class="text-[10px] text-violet-400 font-bold uppercase tracking-[0.2em]">${country.subregion || country.region || ''}</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gradient-to-br from-violet-500/10 to-transparent p-5 rounded-3xl border border-white/10 text-center">
+                            <i class="fas fa-clock text-violet-400 mb-2 text-xl"></i>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Hora Local</p>
+                            <p class="text-3xl font-black text-white mt-1">${horaFormateada}</p>
+                            <p class="text-[9px] text-slate-400 mt-1 italic">${tzDisplay}</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-emerald-500/10 to-transparent p-5 rounded-3xl border border-white/10 text-center">
+                            <i class="fas fa-hand-holding-dollar text-emerald-400 mb-2 text-xl"></i>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Valor Divisa</p>
+                            <p class="text-xl font-black text-white mt-1">${infoCambio}</p>
+                            <p class="text-[10px] text-emerald-300/70 font-medium uppercase mt-1">${currencyName}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-white/5 rounded-2xl border border-white/5 flex justify-around items-center">
+                        <div class="text-center">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold">Población</p>
+                            <p class="text-sm font-bold text-white">${country.population ? country.population.toLocaleString() : 'N/A'}</p>
+                        </div>
+                        <div class="h-8 w-px bg-white/10"></div>
+                        <div class="text-center">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold">Capital</p>
+                            <p class="text-sm font-bold text-white">${country.capital ? country.capital[0] : 'N/A'}</p>
+                        </div>
+                    </div>`;
+                    
+                modal.classList.remove('hidden');
+            } catch (err) { 
+                console.error('Error en verDetalles:', err);
+                alert(`Error al sincronizar datos: ${err.message}`);
+            }
+        }
+
+        // Resto de funciones (cargarListaPaises, buscarPaises, etc.) se mantienen igual
+        async function cargarListaPaises() {
+            try {
+                const response = await fetch('https://restcountries.com/v3.1/all?fields=name,flags,currencies,region');
+                const data = await response.json();
+                allCountriesList = data.sort((a, b) => a.name.common.localeCompare(b.name.common));
+                
+                const select = document.getElementById('baseCountrySelect');
+                select.innerHTML = '<option value="">Selecciona un país base</option>';
+                
+                const datalist = document.getElementById('country-list');
+                datalist.innerHTML = '';
+                
+                allCountriesList.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.name.common;
+                    option.textContent = country.name.common;
+                    select.appendChild(option);
+                    
+                    const datalistOption = document.createElement('option');
+                    datalistOption.value = country.name.common;
+                    datalist.appendChild(datalistOption);
+                });
+                
+                if (allCountriesList.some(c => c.name.common === 'Mexico')) {
+                    select.value = 'Mexico';
+                } else if (allCountriesList.length > 0) {
+                    select.value = allCountriesList[0].name.common;
+                }
+                if (currentTargetCountry) {
+                    actualizarComparacion();
+                }
+            } catch (err) {
+                console.error('Error cargando países:', err);
+                document.getElementById('baseCountrySelect').innerHTML = '<option value="">Error cargando países</option>';
+            }
+        }
+
+        async function buscarPaises(query) {
+            if (!query || query.length < 2) return [];
+            try {
+                const res = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(query)}?fields=name,flags,currencies,capital,region,subregion,population,timezones`);
+                if (!res.ok) {
+                    if (res.status === 404) return [];
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                return data;
+            } catch (err) {
+                console.error('Error en búsqueda:', err);
+                return [];
+            }
+        }
+
+        async function mostrarTipoCambio() {
+            const modal = document.getElementById('modal-tipo-cambio');
+            const content = document.getElementById('exchange-rates-content');
+            modal.classList.remove('hidden');
+            content.innerHTML = '<div class="text-center py-4"><i class="fas fa-circle-notch fa-spin text-violet-500"></i><p class="mt-2 text-slate-400">Obteniendo cotizaciones...</p></div>';
+            
+            const currencies = ['MXN', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'BRL'];
+            const rates = [];
+            
+            for (const currency of currencies) {
+                try {
+                    const res = await fetch(`${API_BASE}/api/cambio/${currency}`);
+                    const data = await res.json();
+                    if (data.tasa && data.tasa !== "N/A") {
+                        rates.push({ currency, rate: data.tasa });
+                    } else {
+                        rates.push({ currency, rate: 'N/A' });
+                    }
+                } catch (err) {
+                    rates.push({ currency, rate: 'Error' });
+                }
+            }
+            
+            if (rates.length === 0) {
+                content.innerHTML = '<div class="text-center text-red-400">No se pudo obtener información de cambio.</div>';
+            } else {
+                content.innerHTML = `
+                    <div class="space-y-2">
+                        ${rates.map(r => `
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/10">
+                                <span class="font-bold text-white">${r.currency}</span>
+                                <span class="text-emerald-400">1 USD = ${r.rate !== 'N/A' && r.rate !== 'Error' ? r.rate.toFixed(2) : r.rate} ${r.currency}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="mt-4 p-3 bg-violet-500/10 rounded-xl text-center text-xs text-slate-400">
+                        <i class="fas fa-info-circle mr-1"></i> Cotización aproximada del día
+                    </div>
+                `;
+            }
+        }
+
+        function cerrarTipoCambio() {
+            document.getElementById('modal-tipo-cambio').classList.add('hidden');
+        }
+
+        async function compararPaises(baseName, targetName) {
+            if (!baseName || !targetName) return;
+
+            const modalContent = document.getElementById('comparacion-content');
+            modalContent.innerHTML = '<div class="text-center py-10"><i class="fas fa-circle-notch fa-spin text-4xl text-violet-500"></i><p class="mt-4 text-slate-400">Cargando comparación...</p></div>';
+
+            try {
+                const resBase = await fetch(`${API_BASE}/api/buscar/${baseName}`);
+                const dataBase = await resBase.json();
+                const baseCountry = dataBase[0];
+                
+                const resTarget = await fetch(`${API_BASE}/api/buscar/${targetName}`);
+                const dataTarget = await resTarget.json();
+                const targetCountry = dataTarget[0];
+
+                if (!baseCountry || !targetCountry) {
+                    throw new Error('No se pudieron obtener los datos de uno de los países');
+                }
+
+                const currencyBase = baseCountry.currencies ? Object.keys(baseCountry.currencies)[0] : null;
+                const currencyTarget = targetCountry.currencies ? Object.keys(targetCountry.currencies)[0] : null;
+                
+                let tasaBaseUSD = 1, tasaTargetUSD = 1;
+                try {
+                    if (currencyBase) {
+                        const resCambioBase = await fetch(`${API_BASE}/api/cambio/${currencyBase}`);
+                        const dataCambioBase = await resCambioBase.json();
+                        if (dataCambioBase.tasa && dataCambioBase.tasa !== "N/A") tasaBaseUSD = 1 / dataCambioBase.tasa;
+                    }
+                    if (currencyTarget) {
+                        const resCambioTarget = await fetch(`${API_BASE}/api/cambio/${currencyTarget}`);
+                        const dataCambioTarget = await resCambioTarget.json();
+                        if (dataCambioTarget.tasa && dataCambioTarget.tasa !== "N/A") tasaTargetUSD = 1 / dataCambioTarget.tasa;
+                    }
+                } catch (e) { console.log("Error obteniendo tasas de cambio"); }
+
+                const factoresCosto = {
+                    'Mexico': 1.0,
+                    'United States': 2.2,
+                    'Canada': 1.9,
+                    'Brazil': 0.8,
+                    'Argentina': 0.7,
+                    'Colombia': 0.7,
+                    'Chile': 0.9,
+                    'Peru': 0.6,
+                    'Spain': 1.1,
+                    'France': 1.5,
+                    'Germany': 1.4,
+                    'Italy': 1.3,
+                    'United Kingdom': 1.6,
+                    'Netherlands': 1.5,
+                    'Sweden': 1.7,
+                    'Switzerland': 2.5,
+                    'Japan': 1.4,
+                    'China': 0.6,
+                    'India': 0.4,
+                    'South Korea': 1.3,
+                    'Thailand': 0.5,
+                    'Vietnam': 0.4,
+                    'Indonesia': 0.5,
+                    'Russia': 0.7,
+                    'South Africa': 0.7,
+                    'Egypt': 0.5,
+                    'Nigeria': 0.4,
+                    'Kenya': 0.5,
+                    'Australia': 1.8,
+                    'New Zealand': 1.6,
+                };
+
+                let factorBase = factoresCosto[baseCountry.name.common];
+                if (!factorBase) {
+                    const region = baseCountry.region;
+                    if (region === 'Europe') factorBase = 1.3;
+                    else if (region === 'Asia') factorBase = 0.8;
+                    else if (region === 'Africa') factorBase = 0.6;
+                    else if (region === 'Oceania') factorBase = 1.4;
+                    else factorBase = 1.0;
+                }
+
+                let factorTarget = factoresCosto[targetCountry.name.common];
+                if (!factorTarget) {
+                    const region = targetCountry.region;
+                    if (region === 'Europe') factorTarget = 1.3;
+                    else if (region === 'Asia') factorTarget = 0.8;
+                    else if (region === 'Africa') factorTarget = 0.6;
+                    else if (region === 'Oceania') factorTarget = 1.4;
+                    else factorTarget = 1.0;
+                }
+
+                const gastosReferencia = {
+                    comida: 350,
+                    transporte: 120,
+                    alojamiento: 800,
+                    entretenimiento: 200,
+                    servicios: 150
+                };
+
+                const gastosBaseUSD = {};
+                const gastosTargetUSD = {};
+                for (let key in gastosReferencia) {
+                    gastosBaseUSD[key] = Math.round(gastosReferencia[key] * factorBase);
+                    gastosTargetUSD[key] = Math.round(gastosReferencia[key] * factorTarget);
+                }
+
+                const gastosBaseLocal = {};
+                const gastosTargetLocal = {};
+                if (currencyBase && tasaBaseUSD > 0) {
+                    for (let key in gastosReferencia) {
+                        gastosBaseLocal[key] = Math.round(gastosBaseUSD[key] * tasaBaseUSD);
+                    }
+                }
+                if (currencyTarget && tasaTargetUSD > 0) {
+                    for (let key in gastosReferencia) {
+                        gastosTargetLocal[key] = Math.round(gastosTargetUSD[key] * tasaTargetUSD);
+                    }
+                }
+
+                const totalBaseUSD = Object.values(gastosBaseUSD).reduce((a, b) => a + b, 0);
+                const totalTargetUSD = Object.values(gastosTargetUSD).reduce((a, b) => a + b, 0);
+                const diferencia = ((totalTargetUSD - totalBaseUSD) / totalBaseUSD * 100).toFixed(1);
+
+                modalContent.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="comparison-card rounded-2xl p-6 text-center">
+                            <img src="${baseCountry.flags.svg}" class="w-20 h-12 object-cover mx-auto mb-3 rounded-lg shadow-lg">
+                            <h3 class="text-2xl font-bold text-white">${baseCountry.name.common}</h3>
+                            <p class="text-sm text-slate-400">País base</p>
+                            <p class="text-xs text-violet-400 mt-2">Moneda: ${currencyBase || 'N/A'}</p>
+                            ${tasaBaseUSD ? `<p class="text-xs text-slate-500">1 USD ≈ ${tasaBaseUSD.toFixed(2)} ${currencyBase}</p>` : ''}
+                        </div>
+                        <div class="comparison-card rounded-2xl p-6 text-center">
+                            <img src="${targetCountry.flags.svg}" class="w-20 h-12 object-cover mx-auto mb-3 rounded-lg shadow-lg">
+                            <h3 class="text-2xl font-bold text-white">${targetCountry.name.common}</h3>
+                            <p class="text-sm text-slate-400">País a comparar</p>
+                            <p class="text-xs text-emerald-400 mt-2">Moneda: ${currencyTarget || 'N/A'}</p>
+                            ${tasaTargetUSD ? `<p class="text-xs text-slate-500">1 USD ≈ ${tasaTargetUSD.toFixed(2)} ${currencyTarget}</p>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8 p-4 bg-white/5 rounded-2xl border border-white/10">
+                        <p class="text-center text-lg font-semibold text-white">
+                            ${diferencia > 0 ? `💰 ${targetCountry.name.common} es <span class="text-red-400">${diferencia}% más caro</span> que ${baseCountry.name.common}` : 
+                              diferencia < 0 ? `💚 ${targetCountry.name.common} es <span class="text-green-400">${Math.abs(diferencia)}% más económico</span> que ${baseCountry.name.common}` : 
+                              `📊 Ambos países tienen costo de vida similar`}
+                        </p>
+                    </div>
+                    
+                    <div class="bg-white/5 rounded-2xl p-4">
+                        <canvas id="comparisonChart" class="w-full h-64"></canvas>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6 text-sm">
+                        <div class="space-y-2">
+                            <h4 class="font-bold text-violet-400 mb-3">Gastos en ${baseCountry.name.common}</h4>
+                            <div class="flex justify-between"><span>🍽️ Comida diaria:</span><span class="font-bold">$${gastosBaseUSD.comida} USD ${gastosBaseLocal.comida ? `(${gastosBaseLocal.comida} ${currencyBase})` : ''}</span></div>
+                            <div class="flex justify-between"><span>🚗 Transporte:</span><span class="font-bold">$${gastosBaseUSD.transporte} USD ${gastosBaseLocal.transporte ? `(${gastosBaseLocal.transporte} ${currencyBase})` : ''}</span></div>
+                            <div class="flex justify-between"><span>🏨 Alojamiento/día:</span><span class="font-bold">$${gastosBaseUSD.alojamiento} USD ${gastosBaseLocal.alojamiento ? `(${gastosBaseLocal.alojamiento} ${currencyBase})` : ''}</span></div>
+                            <div class="flex justify-between"><span>🎭 Entretenimiento:</span><span class="font-bold">$${gastosBaseUSD.entretenimiento} USD ${gastosBaseLocal.entretenimiento ? `(${gastosBaseLocal.entretenimiento} ${currencyBase})` : ''}</span></div>
+                            <div class="flex justify-between"><span>💡 Servicios:</span><span class="font-bold">$${gastosBaseUSD.servicios} USD ${gastosBaseLocal.servicios ? `(${gastosBaseLocal.servicios} ${currencyBase})` : ''}</span></div>
+                            <div class="flex justify-between pt-2 border-t border-white/10"><span class="font-bold">Total diario:</span><span class="font-bold text-violet-400">$${totalBaseUSD} USD</span></div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-bold text-emerald-400 mb-3">Gastos en ${targetCountry.name.common}</h4>
+                            <div class="flex justify-between"><span>🍽️ Comida diaria:</span><span class="font-bold">$${gastosTargetUSD.comida} USD ${gastosTargetLocal.comida ? `(${gastosTargetLocal.comida} ${currencyTarget})` : ''}</span></div>
+                            <div class="flex justify-between"><span>🚗 Transporte:</span><span class="font-bold">$${gastosTargetUSD.transporte} USD ${gastosTargetLocal.transporte ? `(${gastosTargetLocal.transporte} ${currencyTarget})` : ''}</span></div>
+                            <div class="flex justify-between"><span>🏨 Alojamiento/día:</span><span class="font-bold">$${gastosTargetUSD.alojamiento} USD ${gastosTargetLocal.alojamiento ? `(${gastosTargetLocal.alojamiento} ${currencyTarget})` : ''}</span></div>
+                            <div class="flex justify-between"><span>🎭 Entretenimiento:</span><span class="font-bold">$${gastosTargetUSD.entretenimiento} USD ${gastosTargetLocal.entretenimiento ? `(${gastosTargetLocal.entretenimiento} ${currencyTarget})` : ''}</span></div>
+                            <div class="flex justify-between"><span>💡 Servicios:</span><span class="font-bold">$${gastosTargetUSD.servicios} USD ${gastosTargetLocal.servicios ? `(${gastosTargetLocal.servicios} ${currencyTarget})` : ''}</span></div>
+                            <div class="flex justify-between pt-2 border-t border-white/10"><span class="font-bold">Total diario:</span><span class="font-bold text-emerald-400">$${totalTargetUSD} USD</span></div>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    const ctx = document.getElementById('comparisonChart').getContext('2d');
+                    if (comparacionChart) comparacionChart.destroy();
+                    comparacionChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Comida', 'Transporte', 'Alojamiento', 'Entretenimiento', 'Servicios'],
+                            datasets: [
+                                {
+                                    label: baseCountry.name.common,
+                                    data: [gastosBaseUSD.comida, gastosBaseUSD.transporte, gastosBaseUSD.alojamiento, gastosBaseUSD.entretenimiento, gastosBaseUSD.servicios],
+                                    backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                                    borderColor: 'rgba(139, 92, 246, 1)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: targetCountry.name.common,
+                                    data: [gastosTargetUSD.comida, gastosTargetUSD.transporte, gastosTargetUSD.alojamiento, gastosTargetUSD.entretenimiento, gastosTargetUSD.servicios],
+                                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                                    borderColor: 'rgba(16, 185, 129, 1)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: { labels: { color: 'white' } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.dataset.label}: $${context.raw} USD`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: { ticks: { color: 'white' }, title: { display: true, text: 'Costo en USD', color: 'white' } },
+                                x: { ticks: { color: 'white' } }
+                            }
+                        }
+                    });
+                }, 100);
+            } catch (err) {
+                console.error(err);
+                modalContent.innerHTML = `<div class="text-center py-10 text-red-400"><i class="fas fa-exclamation-triangle text-3xl"></i><p class="mt-4">Error al cargar comparación: ${err.message}</p></div>`;
+            }
+        }
+
+        async function actualizarComparacion() {
+            const baseSelect = document.getElementById('baseCountrySelect');
+            const baseName = baseSelect.value;
+            if (!baseName || !currentTargetCountry) return;
+            await compararPaises(baseName, currentTargetCountry);
+        }
+
+        async function abrirComparacion(paisNombre) {
+            currentTargetCountry = paisNombre;
+            if (allCountriesList.length === 0) {
+                await cargarListaPaises();
+            }
+            document.getElementById('modal-comparacion').classList.remove('hidden');
+            const baseSelect = document.getElementById('baseCountrySelect');
+            if (baseSelect.value) {
+                await actualizarComparacion();
+            } else {
+                document.getElementById('comparacion-content').innerHTML = '<div class="text-center text-slate-400">Selecciona un país base para ver la comparación</div>';
+            }
+        }
+
+        function cerrarComparacion() {
+            document.getElementById('modal-comparacion').classList.add('hidden');
+            if (comparacionChart) {
+                comparacionChart.destroy();
+                comparacionChart = null;
+            }
+            currentTargetCountry = null;
+        }
+
+        function configurarSelector() {
+            const select = document.getElementById('baseCountrySelect');
+            if (select) {
+                select.addEventListener('change', () => {
+                    if (currentTargetCountry) {
+                        actualizarComparacion();
+                    }
+                });
+            }
+        }
+
+        function createCountryCard(country) {
+            const currencyKey = country.currencies ? Object.keys(country.currencies)[0] : 'N/A';
+            const countryJson = JSON.stringify(country).replace(/'/g, "&apos;");
+
+            return `
+            <article class="glass-card rounded-3xl overflow-hidden flex flex-col fade-in">
+                <div class="relative h-48 overflow-hidden">
+                    <img src="${country.flags?.svg || country.flags?.png || ''}" class="w-full h-full object-cover">
+                    <div class="absolute bottom-4 left-4">
+                        <span class="bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-lg text-[10px] font-bold tracking-widest uppercase">${country.region || 'Mundo'}</span>
+                    </div>
+                </div>
+                <div class="p-6 flex-grow">
+                    <div class="flex justify-between items-center mb-6">
+                        <h4 class="text-2xl font-extrabold text-white tracking-tight truncate">${country.name.common}</h4>
+                        <button onclick='toggleFavorite(${countryJson})' class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-red-500/20 hover:text-red-500 transition-all border border-white/10">
+                            <i class="fa-solid fa-heart"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white/5 p-3 rounded-2xl border border-white/5">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Capital</p>
+                            <p class="text-sm font-semibold text-slate-200 truncate">${country.capital ? country.capital[0] : 'N/A'}</p>
+                        </div>
+                        <div class="bg-white/5 p-3 rounded-2xl border border-white/5">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Moneda</p>
+                            <p class="text-sm font-semibold text-slate-200">${currencyKey}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 pt-0 mt-auto flex gap-3">
+                    <button onclick="verDetalles('${country.name.common}')" class="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 font-bold text-xs uppercase tracking-widest hover:bg-white hover:text-black transition-all">
+                        Detalles
+                    </button>
+                    <button onclick="abrirComparacion('${country.name.common}')" class="flex-1 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 font-bold text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-emerald-500/20">
+                        <i class="fas fa-chart-line mr-1"></i> Comparar
+                    </button>
+                </div>
+            </article>`;
+        }
+
+        // Búsqueda con debounce
+        let debounceTimer;
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            clearTimeout(debounceTimer);
+            
+            if (query.length < 2) {
+                grid.innerHTML = '<div class="text-slate-500 col-span-full text-center py-10 italic">Escribe al menos 2 caracteres para buscar...</div>';
+                return;
+            }
+
+            debounceTimer = setTimeout(async () => {
+                grid.innerHTML = '';
+                loading.classList.remove('hidden');
+                try {
+                    const results = await buscarPaises(query);
+                    loading.classList.add('hidden');
+                    
+                    if (results.length === 0) {
+                        grid.innerHTML = '<div class="text-slate-500 col-span-full text-center py-10 italic">No se encontraron países con ese nombre.</div>';
+                        return;
+                    }
+                    
+                    grid.innerHTML = results.map(c => createCountryCard(c)).join('');
+                } catch (err) {
+                    loading.classList.add('hidden');
+                    grid.innerHTML = '<div class="text-red-400 col-span-full text-center py-10">Error al buscar. Intenta de nuevo.</div>';
+                }
+            }, 500);
+        });
+
+        async function filtrarRegion(region) {
+            grid.innerHTML = '';
+            loading.classList.remove('hidden');
+            document.getElementById('section-title').innerText = `Países en ${region}`;
+            try {
+                const res = await fetch(`https://restcountries.com/v3.1/region/${region}`);
+                const data = await res.json();
+                loading.classList.add('hidden');
+                grid.innerHTML = data.slice(0, 12).map(c => createCountryCard(c)).join('');
+            } catch (err) { 
+                loading.classList.add('hidden');
+                console.error(err);
+                grid.innerHTML = '<div class="text-red-400 col-span-full text-center py-10">Error al cargar la región.</div>';
+            }
+        }
+
+        function irAExplorar() {
+            searchInput.value = '';
+            document.getElementById('section-title').innerText = "Explorar Países";
+            document.getElementById('section-desc').innerText = "Resultados globales en tiempo real";
+            grid.innerHTML = '<div class="text-slate-500 col-span-full text-center py-10 italic">Comienza a escribir en el buscador para explorar...</div>';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-detalles').classList.add('hidden');
+        }
+
+        function cerrarSesion() {
+            document.getElementById('modal-sesion').classList.add('hidden');
+        }
+
+        function cambiarVista(vista) {
+            const login = document.getElementById('view-login');
+            const registro = document.getElementById('view-registro');
+            if (vista === 'registro') {
+                login.classList.add('hidden');
+                registro.classList.remove('hidden');
+            } else {
+                registro.classList.add('hidden');
+                login.classList.remove('hidden');
+            }
+        }
+
+        // Configurar eventos de formularios
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('loginIdentifier').value;
+            const password = document.getElementById('loginPassword').value;
+            await login(identifier, password);
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('registerEmail').value;
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            await register(email, username, password);
+        });
+
+        // Inicialización
+        if (currentUser) {
+            document.getElementById('authButtonText').innerText = currentUser.username;
+        }
+        cargarListaPaises().then(() => configurarSelector());
+    </script>
+</body>
+</html>
